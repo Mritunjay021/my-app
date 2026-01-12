@@ -38,12 +38,12 @@ export default function Home() {
 
     const {mutate:createRoom} = useMutation({
       mutationFn:async()=>{
-        const res = await fetch('/api/room/create',{
+        const res = await fetch('/room/create',{
           method:'POST'
         });
 
         if(res.status === 200){
-          router.push(`/api/room/${(await res.json()).roomID}`);
+          router.push(`/room/${(await res.json()).roomID}`);
         }
       }
     })
@@ -70,7 +70,7 @@ export default function Home() {
             </div>
 
           </div>
-          <button onClick={()=> createRoom()} className="w-full bg-zinc-100 text-black p-3 text-sm font-bold hover:bg-zinc-50 hover:text-black transition-colors mt-2 cursor—pointer disabled:opacity-50">Create Room</button>
+          <button onClick={()=> createRoom()} className="w-full bg-zinc-100 text-black p-3 text-sm font-bold hover:bg-zinc-50 hover:text-black transition-colors mt-2 cursor-pointer disabled:opacity-50">Create Room</button>
 
         </div>
 

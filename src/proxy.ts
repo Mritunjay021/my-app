@@ -4,6 +4,11 @@ import { nanoid } from "nanoid";
 
 export default async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
+
+  if (pathname === "/room/create") {
+    return NextResponse.next();
+  }
+  
   const res = NextResponse.next();
 
   const roomMatch = pathname.match(/^\/room\/([^/]+)$/);
@@ -25,21 +30,30 @@ export default async function proxy(req: NextRequest) {
     );
   }
 
+  const existingUser = req.cookies.get("x-auth-token")?.value;
+
+  if(existingUser && meta.connected.includes(existingUser)){
+    return NextResponse.next();
+  }
+
+  if(meta.connected?.length >=2){
+    return NextResponse.redirect(
+      new URL("/?error=room-full", req.url)
+    )
+  }
+
   const token = nanoid();
 
   res.cookies.set("x-auth-token", token, {
     httpOnly: true,
     sameSite: "strict",
     path: "/",
-    secure: process.env.NODE_ENV === "production",
+    // secure: process.env.NODE_ENV === "production",
   });
 
-  const connected: string[] = meta.connected
-    ? JSON.parse(meta.connected)
-    : [];
 
   await redis.hset(`meta:${roomID}`, {
-    connected: JSON.stringify([...connected, token]),
+    connected: JSON.stringify([...meta.connected, token]),
   });
 
   return res;
