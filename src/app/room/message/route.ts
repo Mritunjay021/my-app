@@ -4,6 +4,8 @@ import { authMiddleware } from "../create/auth";
 import { redis } from "@/lib/redis";
 import { nanoid } from "nanoid";
 import { time } from "console";
+import { Message, realtime } from "@/lib/realtime";
+import { RealtimeEvents } from "@/lib/realtime";
 
 const querySchema = z.object({
     roomId:z.string(),
@@ -41,5 +43,22 @@ export async function POST(req: NextRequest){
             roomId,
             token,
         }
+
+        await redis.rpush(`messages:${roomId}`,message);
+
+        const channel = realtime.channel(roomId) as {
+            emit<E extends keyof RealtimeEvents>(
+            event: E,
+            payload: RealtimeEvents[E]
+        ): Promise<void>
+        }
+
+        await channel.emit("chat.message",message);
+
+        const remaining = await redis.ttl(`meta:${roomId}`)
+        await redis.expire(`messages:${roomId}`, remaining)
+        await redis.expire(`history:${roomId}`, remaining)
+        await redis.expire(roomId, remaining)
+        return NextResponse.json({ success: true })
     }
 }

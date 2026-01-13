@@ -1,16 +1,38 @@
 "use client";
 
+import { useUsername } from "@/hooks/use-username";
+import { useMutation } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useRef, useState } from "react";
 
 const Page = () =>{
     const params = useParams();
-    const roomID = params.roomID as string;
+    const roomId = params.roomID as string;
 
+    const {username} = useUsername();
     const [copystatus,setCopyStatus] = useState("COPY");
     const [timeremain,setTimeRemain] = useState<number|null>(null);
     const [input,setInput] = useState("");
     const inputRef = useRef<HTMLInputElement>(null); 
+
+    const { mutate: sendMessage } = useMutation({
+  mutationFn: async ({ text }: { text: string }) => {
+    const res = await fetch(`/message?roomId=${roomId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sender: username,
+        text,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to send message");
+    }
+  },
+});
 
     const copyLink = ()=>{
         const link = window.location.href;
@@ -37,7 +59,7 @@ const Page = () =>{
                         </span>
                         <div className="flex items-center gap-2">
                             <span className="font-bold text-green-500">
-                                {roomID}
+                                {roomId}
                             </span>
                             <button className="text-[10px] bg-zinc-800 hover:bg-zinc-700 px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200 transition-colors" onClick={copyLink}>
                                 {copystatus}
@@ -74,7 +96,7 @@ const Page = () =>{
                         <input autoFocus type="text" value={input} 
                         onChange={(e)=>setInput(e.target.value)} 
                         placeholder="Enter Your Message...."
-                        onKeyDown={(e)=>{if(e.key === "Enter" && input.trim()) { inputRef.current?.focus}}}
+                        onKeyDown={(e)=>{if(e.key === "Enter" && input.trim()) { inputRef.current?.focus()}}}
                         className="w-full bg-black border border-zinc-800 focus:border-zinc-700 focus:outline-none transition-colors text-zinc-100 placeholder:text-zinc-700 py-3 pl-8 pr-4 text-sm"/>
                     </div>
                     <button className="bg-zinc-800 text-zinc-400 px-6 text-sm font-bold hover:text-zinc-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
