@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.16",
-    "@upstash/realtime": "github:upstash/realtime",
+    "@upstash/realtime": "^1.0.0",
     "@upstash/redis": "^1.36.1",
     "express": "^5.2.1",
     "nanoid": "^5.1.6",
