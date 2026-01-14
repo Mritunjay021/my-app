@@ -60,5 +60,9 @@ export async function POST(req: NextRequest){
         await redis.expire(`history:${roomId}`, remaining)
         await redis.expire(roomId, remaining)
         return NextResponse.json({ success: true })
+    }catch(e){
+        return NextResponse.json(
+            {error:(e as Error).message || "internal-server-error"}
+            ,{status:500});
     }
 }

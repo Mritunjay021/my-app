@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { redis } from "./lib/redis";
+import { redis } from "./redis";
 import { nanoid } from "nanoid";
 
 export default async function proxy(req: NextRequest) {

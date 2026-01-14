@@ -15,7 +15,7 @@ const Page = () =>{
     const [input,setInput] = useState("");
     const inputRef = useRef<HTMLInputElement>(null); 
 
-    const { mutate: sendMessage } = useMutation({
+    const { mutate: sendMessage,isPending } = useMutation({
   mutationFn: async ({ text }: { text: string }) => {
     const res = await fetch(`/message?roomId=${roomId}`, {
       method: "POST",
@@ -96,10 +96,19 @@ const Page = () =>{
                         <input autoFocus type="text" value={input} 
                         onChange={(e)=>setInput(e.target.value)} 
                         placeholder="Enter Your Message...."
-                        onKeyDown={(e)=>{if(e.key === "Enter" && input.trim()) { inputRef.current?.focus()}}}
+                        onKeyDown={(e)=>{if(e.key === "Enter" && input.trim())
+                             {
+                                sendMessage({text:input})
+                               inputRef.current?.focus()
+                               setInput("")
+                            }}}
                         className="w-full bg-black border border-zinc-800 focus:border-zinc-700 focus:outline-none transition-colors text-zinc-100 placeholder:text-zinc-700 py-3 pl-8 pr-4 text-sm"/>
                     </div>
-                    <button className="bg-zinc-800 text-zinc-400 px-6 text-sm font-bold hover:text-zinc-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                    <button onClick={()=>{sendMessage({text:input}) 
+                                setInput("")
+                                inputRef.current?.focus()}}
+                                disabled={input.trim().length===0 || isPending}
+                     className="bg-zinc-800 text-zinc-400 px-6 text-sm font-bold hover:text-zinc-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                         SEND
                     </button>
                 </div>
