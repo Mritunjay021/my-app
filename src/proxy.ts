@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { redis } from "./redis";
+import { redis } from "@/lib/redis";
 import { nanoid } from "nanoid";
 
 export default async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  if (pathname === "/room/create") {
-    return NextResponse.next();
-  }
+  // if (pathname === "/api/create") {
+  //   return NextResponse.next();
+  // }
   
   const res = NextResponse.next();
 
@@ -50,7 +50,6 @@ export default async function proxy(req: NextRequest) {
     path: "/",
     // secure: process.env.NODE_ENV === "production",
   });
-
 
   await redis.hset(`meta:${roomID}`, {
     connected: JSON.stringify([...meta.connected, token]),

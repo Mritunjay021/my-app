@@ -1,6 +1,6 @@
 import { InferRealtimeEvents, Realtime } from "@upstash/realtime"
 import { z } from "zod"
-import { redis } from "./redis"
+import { redis } from "@/lib/redis"
 
 const message= z.object({
       id: z.string(),

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react"
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useUsername } from "@/hooks/use-username";
@@ -11,7 +10,7 @@ export default function Home() {
 
     const {mutate:createRoom} = useMutation({
       mutationFn:async()=>{
-        const res = await fetch('/room/create',{
+        const res = await fetch('/api/create',{
           method:'POST'
         });
 

@@ -3,7 +3,6 @@ import { z } from "zod";
 import { authMiddleware } from "../create/auth";
 import { redis } from "@/lib/redis";
 import { nanoid } from "nanoid";
-import { time } from "console";
 import { Message, realtime } from "@/lib/realtime";
 import { RealtimeEvents } from "@/lib/realtime";
 
