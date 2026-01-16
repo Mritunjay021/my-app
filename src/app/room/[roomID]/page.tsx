@@ -1,7 +1,7 @@
 "use client";
 
 import { useUsername } from "@/hooks/use-username";
-import type { Message} from "@/lib/realtime";
+import type { Message } from "@/lib/realtime";
 import { useRealtime } from "@/lib/realtime-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -17,7 +17,6 @@ const Page = () =>{
     const [timeremain,setTimeRemain] = useState<number|null>(null);
     const [input,setInput] = useState("");
     const inputRef = useRef<HTMLInputElement>(null); 
-
 
     const {data:messages,refetch} = useQuery<Message[]>({
         queryKey:['messages',roomId],
