@@ -1,7 +1,10 @@
 "use client";
 
 import { useUsername } from "@/hooks/use-username";
-import { useMutation } from "@tanstack/react-query";
+import type { Message} from "@/lib/realtime";
+import { useRealtime } from "@/lib/realtime-client";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { useParams } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -15,24 +18,47 @@ const Page = () =>{
     const [input,setInput] = useState("");
     const inputRef = useRef<HTMLInputElement>(null); 
 
+
+    const {data:messages,refetch} = useQuery<Message[]>({
+        queryKey:['messages',roomId],
+        queryFn:async()=>{
+            const res = await fetch(`/api/message?roomId=${roomId}`);
+            
+            if (!res.ok) {
+                throw new Error("Failed to fetch messages");
+            }
+            const data=await res.json();
+            return data.messages;
+        }
+    })
+
     const { mutate: sendMessage,isPending } = useMutation({
   mutationFn: async ({ text }: { text: string }) => {
-    const res = await fetch(`/api/message?roomId=${roomId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sender: username,
-        text,
-      }),
+        const res = await fetch(`/api/message?roomId=${roomId}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            sender: username,
+            text,
+        }),
+        });
+        if (!res.ok) {
+        throw new Error("Failed to send message");
+        }
+    },
     });
 
-    if (!res.ok) {
-      throw new Error("Failed to send message");
-    }
-  },
-});
+    useRealtime({
+        channels:[roomId],
+        events:["chat.message","chat.destroy"],
+        onData:({event})=>{
+            if(event === "chat.message"){
+                refetch();
+            }
+        },
+    })
 
     const copyLink = ()=>{
         const link = window.location.href;
@@ -87,7 +113,37 @@ const Page = () =>{
 
             </header>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"> </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"> 
+                {messages?.length === 0 && (
+                    <div className="flex items-center justify-center h-full">
+                        <span className=" text-white-500 animate-pulse">
+                            {"</blank>"}
+                        </span>
+                    </div>
+                )}
+                {
+                    messages?.map((msg)=>(
+                    <div key={msg.id} className="flex flex-col items-start">
+                        <div className="max-w-[80%] group">
+                            <div className="flex items-baseline gap-3 mb-1">
+                                <span className={`text-xs font-bold ${msg.sender === username ? 'text-green-400' : 'text-zinc-400'}`}>
+                                    {msg.sender === username ? "You" : msg.sender }
+                                </span>
+
+                                <span className="text-[10px] text-zinc-600">
+                                    {format(msg.timestamp,"hh:mm")}
+                                </span>
+                            </div>
+
+                            <p className="text-sm text-zinc-300 leading-relaxed break-all">
+                                {msg.text}
+                            </p>
+                        </div>
+                        
+                    </div>
+                    ))
+                }
+            </div>
 
             <div className="p-4 border-t border-zinc-800 bg-zinc-900/30">
                 <div className="flex gap-4">

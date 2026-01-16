@@ -65,3 +65,29 @@ export async function POST(req: NextRequest){
             ,{status:500});
     }
 }
+
+export async function GET(req:NextRequest){
+    try{
+        const {auth} = await authMiddleware(req);
+        const {roomId,token} = auth;
+
+        const {searchParams} = new URL(req.url);
+        querySchema.parse({
+            roomId:searchParams.get("roomId")
+        })
+
+        const msg = await redis.lrange<Message & {token?:string}>(`messages:${roomId}`,0,-1)
+
+        const safemsg = msg.map((m)=>({
+            ...m,
+            token: m.token === token ? m.token : undefined,
+        }))
+
+        return NextResponse.json({messages:safemsg});
+    }catch(err){
+        return NextResponse.json(
+            {error:(err as Error).message || "internal-server-error"},
+            {status:500}
+        )
+    }
+}
