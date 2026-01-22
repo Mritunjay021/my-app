@@ -51,7 +51,7 @@ const Page = () =>{
 
     useRealtime({
         channels:[roomId],
-        events:["chat.message","chat.destroy"],
+        events:["chat.message"],
         onData:({event})=>{
             if(event === "chat.message"){
                 refetch();

@@ -18,7 +18,7 @@ const schema = {
       isDestroyed: z.literal(true),
     }),
   },
-} as const
+} as const;
 
 export const realtime = new Realtime({
   redis,
