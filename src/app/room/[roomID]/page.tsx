@@ -51,10 +51,13 @@ const Page = () =>{
 
     useRealtime({
         channels:[roomId],
-        events:["chat.message"],
+        events:["chat.message","chat.destroy"],
         onData:({event})=>{
             if(event === "chat.message"){
                 refetch();
+            }
+            if(event === "chat.destroy"){
+                setTimeRemain(0);
             }
         },
     })

@@ -21,8 +21,8 @@ const schema = {
 } as const;
 
 export const realtime = new Realtime({
-  redis,
   schema,
+  redisClient: redis,
 })
 
 export type RealtimeEvents = InferRealtimeEvents<typeof realtime>

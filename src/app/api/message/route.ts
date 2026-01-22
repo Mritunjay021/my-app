@@ -45,12 +45,14 @@ export async function POST(req: NextRequest){
 
         await redis.rpush(`messages:${roomId}`,message);
 
-        const channel = realtime.channel(roomId) as {
-            emit<E extends keyof RealtimeEvents>(
-            event: E,
-            payload: RealtimeEvents[E]
-        ): Promise<void>
-        }
+        // const channel = realtime.channel(roomId) as {
+        //     emit<E extends keyof RealtimeEvents>(
+        //     event: E,
+        //     payload: RealtimeEvents[E]
+        // ): Promise<void>
+        // }
+
+        const channel = realtime.channel(roomId)
 
         await channel.emit("chat.message",message);
 
