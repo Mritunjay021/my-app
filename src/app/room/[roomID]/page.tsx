@@ -6,17 +6,39 @@ import { useRealtime } from "@/lib/realtime-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 const Page = () =>{
     const params = useParams();
     const roomId = params.roomID as string;
+
+    const router = useRouter();
 
     const {username} = useUsername();
     const [copystatus,setCopyStatus] = useState("COPY");
     const [timeremain,setTimeRemain] = useState<number|null>(null);
     const [input,setInput] = useState("");
     const inputRef = useRef<HTMLInputElement>(null); 
+
+    const {data:ttlData} = useQuery({
+        queryKey:["ttl",roomId],
+        queryFn:async()=>{
+            const res = await fetch(`/api/ttl?roomId=${roomId}`);
+
+            if(!res.ok){
+                throw new Error("Failed to fetch TTL");
+            }
+
+            return res.json();
+        }
+    })
+    
+
+    useEffect(()=>{
+        if(ttlData?.ttl !== undefined)
+            setTimeRemain(ttlData.ttl);
+    },[ttlData])
 
     const {data:messages,refetch} = useQuery<Message[]>({
         queryKey:['messages',roomId],
@@ -57,7 +79,7 @@ const Page = () =>{
                 refetch();
             }
             if(event === "chat.destroy"){
-                setTimeRemain(0);
+                router.push("?/destroyed=true")
             }
         },
     })

@@ -20,7 +20,7 @@ export async function POST(req: NextRequest){
         const {auth} = await authMiddleware(req);
         const {roomId,token} = auth
 
-        const {searchParams} = new URL(req.url)
+        // const {searchParams} = new URL(req.url)
 
         querySchema.parse({roomId})
 
