@@ -7,89 +7,127 @@ import { Message, realtime } from "@/lib/realtime";
 import { RealtimeEvents } from "@/lib/realtime";
 
 const querySchema = z.object({
-    roomId:z.string(),
-})
+  roomId: z.string(),
+});
 
 const bodySchema = z.object({
-    sender:z.string().max(100),
-    text:z.string().max(1000),
-})
+  sender: z.string().max(100),
+  text: z.string().max(1000),
+});
 
-export async function POST(req: NextRequest){
-    try{
-        const {auth} = await authMiddleware(req);
-        const {roomId,token} = auth
+export async function POST(req: NextRequest) {
+  try {
+    const { auth } = await authMiddleware(req);
+    const { roomId, token } = auth;
 
-        // const {searchParams} = new URL(req.url)
+    // const {searchParams} = new URL(req.url)
 
-        querySchema.parse({roomId})
+    querySchema.parse({ roomId });
 
-        const {sender,text} = bodySchema.parse(await req.json())
+    const { sender, text } = bodySchema.parse(await req.json());
 
-        const roomExist = await redis.exists(`meta:${roomId}`);
+    const roomExist = await redis.exists(`meta:${roomId}`);
 
-        if(!roomExist){
-            return NextResponse.json(
-                {error:"room-not-found"}
-                ,{status:404});
-        }
-
-        const message:Message & {token:string}={
-            id:nanoid(),
-            sender,
-            text,
-            timestamp:Date.now(),
-            roomId,
-            token,
-        }
-
-        await redis.rpush(`messages:${roomId}`,message);
-
-        // const channel = realtime.channel(roomId) as {
-        //     emit<E extends keyof RealtimeEvents>(
-        //     event: E,
-        //     payload: RealtimeEvents[E]
-        // ): Promise<void>
-        // }
-
-        const channel = realtime.channel(roomId)
-
-        await channel.emit("chat.message",message);
-
-        const remaining = await redis.ttl(`meta:${roomId}`)
-        await redis.expire(`messages:${roomId}`, remaining)
-        await redis.expire(`history:${roomId}`, remaining)
-        await redis.expire(roomId, remaining)
-        return NextResponse.json({ success: true })
-    }catch(e){
-        return NextResponse.json(
-            {error:(e as Error).message || "internal-server-error"}
-            ,{status:500});
+    if (!roomExist) {
+      return NextResponse.json({ error: "room-not-found" }, { status: 404 });
     }
+
+    const message: Message & { token: string } = {
+      id: nanoid(),
+      sender,
+      text,
+      timestamp: Date.now(),
+      roomId,
+      token,
+    };
+
+    await redis.rpush(`messages:${roomId}`, message);
+
+    // const channel = realtime.channel(roomId) as {
+    //     emit<E extends keyof RealtimeEvents>(
+    //     event: E,
+    //     payload: RealtimeEvents[E]
+    // ): Promise<void>
+    // }
+
+    const channel = realtime.channel(roomId);
+
+    await channel.emit("chat.message", message);
+
+    const remaining = await redis.ttl(`meta:${roomId}`);
+    await redis.expire(`messages:${roomId}`, remaining);
+    await redis.expire(`history:${roomId}`, remaining);
+    await redis.expire(roomId, remaining);
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    return NextResponse.json(
+      { error: (e as Error).message || "internal-server-error" },
+      { status: 500 }
+    );
+  }
 }
 
-export async function GET(req:NextRequest){
-    try{
-        const {auth} = await authMiddleware(req);
-        const {roomId,token} = auth;
+export async function GET(req: NextRequest) {
+  try {
+    const { auth } = await authMiddleware(req);
+    const { roomId, token } = auth;
 
-        const {searchParams} = new URL(req.url);
-        querySchema.parse({
-            roomId:searchParams.get("roomId")
-        })
+    const { searchParams } = new URL(req.url);
+    querySchema.parse({
+      roomId: searchParams.get("roomId"),
+    });
 
-        const msg = await redis.lrange<Message & {token?:string}>(`messages:${roomId}`,0,-1)
+    const msg = await redis.lrange<Message & { token?: string }>(
+      `messages:${roomId}`,
+      0,
+      -1
+    );
 
-        const safemsg = msg.map((m)=>({
-            ...m,
-            token: m.token === token ? m.token : undefined,
-        }))
+    const safemsg = msg.map((m) => ({
+      ...m,
+      token: m.token === token ? m.token : undefined,
+    }));
 
-        return NextResponse.json({messages:safemsg});
-    }catch(err){
-        return NextResponse.json(
-            {error:(err as Error).message || "internal-server-error"},
-            {status:500}
-        )
+    return NextResponse.json({ messages: safemsg });
+  } catch (err) {
+    return NextResponse.json(
+      { error: (err as Error).message || "internal-server-error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { auth } = await authMiddleware(req);
+    const { roomId } = auth;
+
+    querySchema.parse({ roomId });
+
+    const roomExist = await redis.exists(`meta:${roomId}`);
+
+    if (!roomExist) {
+      console.log("Room not found:", roomId);
+      return NextResponse.json({ error: "room-not-found" }, { status: 404 });
     }
+
+    console.log("Destroying room:", roomId);
+
+    await redis.del(`meta:${roomId}`);
+    await redis.del(`messages:${roomId}`);
+    await redis.del(`history:${roomId}`);
+
+    const channel = realtime.channel(roomId);
+    await channel.emit("chat.destroy", { isDestroyed: true });
+
+    console.log("chat.destroy event emitted for room:", roomId);
+
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    console.error("Error destroying room:", e);
+    return NextResponse.json(
+      { error: (e as Error).message || "internal-server-error" },
+      { status: 500 }
+    );
+  }
 }
