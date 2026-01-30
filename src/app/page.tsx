@@ -26,24 +26,6 @@ export default function Home() {
     },
   });
 
-  const { mutate: joinRoom } = useMutation({
-    mutationFn: async (roomId: string) => {
-      const res = await fetch(`/api/message?roomId=${roomId}`);
-
-      if (res.status === 404) {
-        router.push(`/?error=room-not-found`);
-        return;
-      }
-
-      if (res.status === 403) {
-        router.push(`/?error=room-full`);
-        return;
-      }
-
-      router.push(`/room/${roomId}`);
-    },
-  });
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
@@ -101,7 +83,7 @@ export default function Home() {
               Create Room
             </button>
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label className="flex items-center text-zinc-500">
                 Join Room
               </label>
@@ -114,13 +96,13 @@ export default function Home() {
                   onChange={(e) => setRoomId(e.target.value)}
                 />
                 <button
-                  onClick={() => joinRoom(roomId)}
+                  onClick={() => router.push(`/room/${roomId}`)}
                   className="w-full bg-zinc-100 text-black p-3 text-sm font-bold hover:bg-zinc-50 hover:text-black transition-colors mt-2 cursor-pointer disabled:opacity-50"
                 >
                   Join
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

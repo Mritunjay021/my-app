@@ -25,7 +25,7 @@ const Page = () => {
   const { data: ttlData } = useQuery({
     queryKey: ["ttl", roomId],
     queryFn: async () => {
-      const res = await fetch(`/api/ttl?roomId=${roomId}`);
+      const res = await fetch(`/api/create?roomId=${roomId}`);
 
       if (!res.ok) {
         throw new Error("Failed to fetch TTL");
@@ -36,8 +36,32 @@ const Page = () => {
   });
 
   useEffect(() => {
-    if (ttlData?.ttl !== undefined) setTimeRemain(ttlData.ttl);
+    if (ttlData?.ttl !== undefined) 
+      setTimeRemain(ttlData.ttl);
   }, [ttlData]);
+
+  useEffect(()=>{
+    
+    if(timeremain===null || timeremain<0)return;
+
+    if(timeremain === 0){
+      router.push("?/destroyed=true");
+      return;
+    }
+
+    const interval = setInterval(()=>{
+      setTimeRemain((prev)=>{
+        if(prev === null || prev<=1){
+          clearInterval(interval);
+          return 0;
+        }
+        return prev-1;
+      })
+    },1000)
+
+    return ()=>clearInterval(interval);
+
+  },[timeremain,router])
 
   const { data: fetchedMessages, refetch } = useQuery<Message[]>({
     queryKey: ["messages", roomId],
@@ -98,22 +122,12 @@ const Page = () => {
 
       switch (event) {
         case "chat.message":
-          if (data) {
-            const newMessage: Message = {
-              id: data.id,
-              sender: data.sender,
-              text: data.text,
-              timestamp: data.timestamp,
-              roomId: data.roomId,
-            };
-            console.log("New message received:", newMessage);
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
-          }
+          refetch();
           break;
 
         case "chat.destroy":
           console.log("chat.destroy event received, redirecting...");
-          router.push("?/destroyed=true");
+          router.push("/?destroyed=true");
           break;
 
         default:
@@ -136,6 +150,9 @@ const Page = () => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
+
+  
+
 
   return (
     <main className="flex flex-col h-screen max-h-screen overflow-hidden">
@@ -183,7 +200,7 @@ const Page = () => {
               }
 
               console.log("Room destroyed successfully");
-              router.push("?/destroyed=true");
+              router.push("/?destroyed=true");
             } catch (error) {
               console.error("Error destroying room:", error);
             }
@@ -206,7 +223,7 @@ const Page = () => {
               <div className="flex items-baseline gap-3 mb-1">
                 <span
                   className={`text-xs font-bold ${
-                    msg.sender === username ? "text-green-400" : "text-zinc-400"
+                    msg.sender === username ? "text-green-400" : "text-blue-400"
                   }`}
                 >
                   {msg.sender === username ? "You" : msg.sender}

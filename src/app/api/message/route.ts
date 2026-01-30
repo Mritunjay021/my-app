@@ -113,12 +113,12 @@ export async function DELETE(req: NextRequest) {
 
     console.log("Destroying room:", roomId);
 
+    const channel = realtime.channel(roomId);
+    await channel.emit("chat.destroy", { isDestroyed: true });
+
     await redis.del(`meta:${roomId}`);
     await redis.del(`messages:${roomId}`);
     await redis.del(`history:${roomId}`);
-
-    const channel = realtime.channel(roomId);
-    await channel.emit("chat.destroy", { isDestroyed: true });
 
     console.log("chat.destroy event emitted for room:", roomId);
 
