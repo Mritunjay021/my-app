@@ -3,9 +3,17 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUsername } from "@/hooks/use-username";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
-export default function Home() {
+const Page = ()=>{
+  <Suspense>
+    <Lobby />
+  </Suspense>
+}
+
+export default Page;
+
+function Lobby() {
   const { username } = useUsername();
   const router = useRouter();
   const [roomId, setRoomId] = useState("");
