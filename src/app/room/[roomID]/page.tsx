@@ -24,6 +24,7 @@ const Page = () => {
 
   const { data: ttlData } = useQuery({
     queryKey: ["ttl", roomId],
+    enabled: !!roomId,
     queryFn: async () => {
       const res = await fetch(`/api/create?roomId=${roomId}`);
 
